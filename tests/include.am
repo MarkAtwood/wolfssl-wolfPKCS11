@@ -42,9 +42,13 @@ tests_empty_pin_store_test_SOURCES = tests/empty_pin_store_test.c
 tests_empty_pin_store_test_LDADD =
 
 check_PROGRAMS += tests/so_login_uninit_test
+check_PROGRAMS += tests/close_all_sessions_logout_test
 noinst_PROGRAMS += tests/so_login_uninit_test
+noinst_PROGRAMS += tests/close_all_sessions_logout_test
 tests_so_login_uninit_test_SOURCES = tests/so_login_uninit_test.c
+tests_close_all_sessions_logout_test_SOURCES = tests/close_all_sessions_logout_test.c
 tests_so_login_uninit_test_LDADD =
+tests_close_all_sessions_logout_test_LDADD =
 
 check_PROGRAMS += tests/find_objects_null_template_test
 noinst_PROGRAMS += tests/find_objects_null_template_test
@@ -250,6 +254,7 @@ tests_debug_test_LDADD += src/libwolfpkcs11.la
 tests_object_id_uniqueness_test_LDADD += src/libwolfpkcs11.la
 tests_empty_pin_store_test_LDADD += src/libwolfpkcs11.la
 tests_so_login_uninit_test_LDADD += src/libwolfpkcs11.la
+tests_close_all_sessions_logout_test_LDADD += src/libwolfpkcs11.la
 tests_find_objects_null_template_test_LDADD += src/libwolfpkcs11.la
 tests_aes_cbc_pad_padding_test_LDADD += src/libwolfpkcs11.la
 tests_ecb_check_value_error_test_LDADD += src/libwolfpkcs11.la
@@ -293,6 +298,7 @@ else
 tests_object_id_uniqueness_test_LDADD += src/libwolfpkcs11.la
 tests_empty_pin_store_test_LDADD += src/libwolfpkcs11.la
 tests_so_login_uninit_test_LDADD += src/libwolfpkcs11.la
+tests_close_all_sessions_logout_test_LDADD += src/libwolfpkcs11.la
 tests_find_objects_null_template_test_LDADD += src/libwolfpkcs11.la
 tests_aes_cbc_pad_padding_test_LDADD += src/libwolfpkcs11.la
 tests_ecb_check_value_error_test_LDADD += src/libwolfpkcs11.la

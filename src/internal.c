@@ -7050,6 +7050,10 @@ void WP11_Slot_CloseSessions(WP11_Slot* slot)
     for (curr = slot->session; curr != NULL; curr = curr->next)
         wp11_Session_Final(curr);
     WP11_Lock_UnlockRW(&slot->lock);
+
+    /* All sessions for the slot are now closed, so per PKCS#11 the application
+     * is logged out of the token (mirrors the WP11_Slot_CloseSession path). */
+    WP11_Slot_Logout(slot);
 }
 
 /**

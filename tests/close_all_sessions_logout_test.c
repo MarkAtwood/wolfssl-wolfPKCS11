@@ -186,8 +186,14 @@ static int run_test(void)
     rv = funcList->C_InitPIN(session, userPin,
                              (CK_ULONG)XSTRLEN((char*)userPin));
     CHECK_RV(rv, "C_InitPIN", CKR_OK);
-    funcList->C_Logout(session);
-    funcList->C_CloseSession(session);
+    rv = funcList->C_Logout(session);
+    CHECK_RV(rv, "C_Logout (SO)", CKR_OK);
+    if (rv != CKR_OK)
+        goto out;
+    rv = funcList->C_CloseSession(session);
+    CHECK_RV(rv, "C_CloseSession (SO)", CKR_OK);
+    if (rv != CKR_OK)
+        goto out;
     session = 0;
 
     /* Log in as USER and confirm the session reports USER functions. */
@@ -207,6 +213,8 @@ static int run_test(void)
      * out of the token. */
     rv = funcList->C_CloseAllSessions(slot);
     CHECK_RV(rv, "C_CloseAllSessions", CKR_OK);
+    if (rv != CKR_OK)
+        goto out;
     session = 0;
 
     /* A newly opened R/W session must now be logged out (RW_PUBLIC_SESSION),

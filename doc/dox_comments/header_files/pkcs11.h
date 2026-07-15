@@ -457,8 +457,10 @@ CK_RV C_CloseSession(CK_SESSION_HANDLE hSession);
  * \brief Close all sessions on a slot.
  * 
  * Closes all sessions an application has with a token in a particular slot.
- * All active operations in all sessions are terminated. See PKCS#11 v2.40
- * Section 11.6.3.
+ * All active operations in all sessions are terminated. The application is
+ * also logged out of the token, so a session opened afterward is in the
+ * public state (CKS_RW_PUBLIC_SESSION / CKS_RO_PUBLIC_SESSION). See PKCS#11
+ * v2.40 Section 11.6.3.
  * 
  * \return CKR_OK on success.
  * \return CKR_CRYPTOKI_NOT_INITIALIZED if C_Initialize was not called.

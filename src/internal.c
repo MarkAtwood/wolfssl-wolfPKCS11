@@ -7027,8 +7027,16 @@ void WP11_Slot_CloseSession(WP11_Slot* slot, WP11_Session* session)
         WP11_Slot_Logout(slot);
 }
 
+/* Reset a slot to logged-out state; caller must hold slot->lock. Defined
+ * alongside WP11_Slot_Logout below. */
+static void wp11_Slot_Logout_Locked(WP11_Slot* slot);
+
 /**
  * Close all sessions associated with a slot.
+ *
+ * After the sessions are closed the token login state is reset to public
+ * (the application is logged out), performed under the same lock hold as the
+ * session close.
  *
  * @param  slot  [in]  Slot object.
  */
@@ -7049,11 +7057,13 @@ void WP11_Slot_CloseSessions(WP11_Slot* slot)
     /* Finalize the rest. */
     for (curr = slot->session; curr != NULL; curr = curr->next)
         wp11_Session_Final(curr);
-    WP11_Lock_UnlockRW(&slot->lock);
 
-    /* All sessions for the slot are now closed, so per PKCS#11 the application
-     * is logged out of the token (mirrors the WP11_Slot_CloseSession path). */
-    WP11_Slot_Logout(slot);
+    /* Still holding slot->lock: per PKCS#11 closing all of a slot's sessions
+     * logs the application out of the token. Reset the login state here, under
+     * the same lock hold as the session close, so a concurrent
+     * C_OpenSession/C_Login cannot interleave between close and logout. */
+    wp11_Slot_Logout_Locked(slot);
+    WP11_Lock_UnlockRW(&slot->lock);
 }
 
 /**
@@ -7651,11 +7661,6 @@ int WP11_Slot_SetUserPin(WP11_Slot* slot, char* pin, int pinLen)
 }
 
 /**
- * Logout of the token.
- *
- * @param  slot  [in]  Slot object referencing token.
- */
-/**
  * Check whether any user is logged in to the token.
  *
  * @param  slot  [in]  Slot object referencing token.
@@ -7674,16 +7679,21 @@ int WP11_Slot_IsLoggedIn(WP11_Slot* slot)
             state != WP11_APP_STATE_RW_PUBLIC);
 }
 
-void WP11_Slot_Logout(WP11_Slot* slot)
+/**
+ * Reset a slot's token to the logged-out (public) state.
+ *
+ * Caller MUST already hold slot->lock (RW). Split out from WP11_Slot_Logout so
+ * that WP11_Slot_CloseSessions can close all sessions and log out under a
+ * single lock hold.
+ *
+ * @param  slot  [in]  Slot object.
+ */
+static void wp11_Slot_Logout_Locked(WP11_Slot* slot)
 {
 #ifndef WOLFPKCS11_NO_STORE
     int state;
     int ret = 0;
-#endif
 
-    WP11_Lock_LockRW(&slot->lock);
-
-#ifndef WOLFPKCS11_NO_STORE
     state = slot->token.loginState;
     if (state == WP11_APP_STATE_RO_USER || state == WP11_APP_STATE_RW_USER) {
         WP11_Object* object = slot->token.object;
@@ -7697,7 +7707,19 @@ void WP11_Slot_Logout(WP11_Slot* slot)
     }
 #endif
     slot->token.loginState = WP11_APP_STATE_RW_PUBLIC;
+}
 
+/**
+ * Logout of the token.
+ *
+ * Acquires slot->lock and delegates to wp11_Slot_Logout_Locked.
+ *
+ * @param  slot  [in]  Slot object referencing token.
+ */
+void WP11_Slot_Logout(WP11_Slot* slot)
+{
+    WP11_Lock_LockRW(&slot->lock);
+    wp11_Slot_Logout_Locked(slot);
     WP11_Lock_UnlockRW(&slot->lock);
 }
 
